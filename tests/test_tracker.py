@@ -154,6 +154,11 @@ class Alerts(unittest.TestCase):
         self.assertEqual(len(tracker.build_alerts(CFG, {"SG141": "SCHEDULED"}, rows)[0]), 1)
 
 
+class Secrets(unittest.TestCase):
+    def test_key_whitespace_stripped(self):
+        self.assertEqual(tracker.AeroDataBox("abc123\n").key, "abc123")
+
+
 class Budget(unittest.TestCase):
     def test_budget_guard(self):
         c = tracker.AeroDataBox("k", budget=3)

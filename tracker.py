@@ -145,8 +145,8 @@ class AeroDataBox:
     COST_NUMBER = 2
 
     def __init__(self, key, budget=40, host=None, raw_dir=None):
-        self.key = key
-        self.host = host or os.environ.get("AERODATABOX_HOST", "aerodatabox.p.rapidapi.com")
+        self.key = (key or "").strip()  # secrets pasted with a trailing newline break HTTP headers
+        self.host = (host or os.environ.get("AERODATABOX_HOST", "aerodatabox.p.rapidapi.com")).strip()
         self.budget = budget
         self.units = 0
         self.raw_dir = raw_dir
@@ -177,6 +177,8 @@ class AeroDataBox:
                 raise ApiError(f"{label}: HTTP {e.code} {e.read()[:200]!r}") from None
             except urllib.error.URLError as e:
                 raise ApiError(f"{label}: {e.reason}") from None
+            except ValueError as e:  # e.g. malformed header/url, never echo the key
+                raise ApiError(f"{label}: bad request ({e.__class__.__name__}); check the RAPIDAPI_KEY secret") from None
             self.units += cost
             if not body:
                 return None
@@ -498,7 +500,7 @@ def main(argv=None):
         from mock_client import MockClient
         client = MockClient(schedule, tz, cancel={nflight(x) for x in args.mock_cancel.split(",") if x})
     else:
-        key = os.environ.get("RAPIDAPI_KEY")
+        key = (os.environ.get("RAPIDAPI_KEY") or "").strip()
         if not key:
             sys.exit("RAPIDAPI_KEY is not set (add it as a GitHub secret, or use --mock).")
         client = AeroDataBox(key, budget=cfg["max_units_per_run"],
@@ -523,7 +525,7 @@ def main(argv=None):
             append_csv(path, OPTION_COLS,
                        [dict(r, run_utc=run_utc, travel_date=travel.isoformat()) for r in o_rows])
             lines, urgent = build_alerts(cfg, prev, o_rows) if prev else ([], False)
-            send_alert(os.environ.get("NTFY_TOPIC"), lines, urgent, travel.isoformat())
+            send_alert((os.environ.get("NTFY_TOPIC") or "").strip(), lines, urgent, travel.isoformat())
         except (ApiError, BudgetExceeded) as e:
             errors.append(f"options: {e}")
 
