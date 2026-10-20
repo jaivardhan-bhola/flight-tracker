@@ -2,10 +2,11 @@
 """Free BLR -> DEL flight tracker (standard library only).
 
 Two things are logged on every run:
-  1. MORNING DELAYS  - every flight listed in the schedule file (flight_numbers.txt) that
-                       departs from / arrives at the home airport between 06:00 and 09:00
-                       today: delay in minutes + status. (Set "only_listed_flights": false in
-                       config.json to track all airlines instead.)
+  1. FLIGHT STATUS   - every flight listed in the schedule file (flight_numbers.txt) that
+                       departs from / arrives at the home airport in the configured
+                       `morning_window`: delay in minutes + status. (Set
+                       "only_listed_flights": false in config.json to track all airlines
+                       instead.)
   2. DEL OPTIONS     - every BLR -> DEL option on the travel date:
                        direct flights (listed flights, from the live airport board) and
                        SpiceJet connecting itineraries (from schedule_blr_del.csv, with
@@ -258,14 +259,41 @@ def make_classifier(threshold):
 # ----------------------------------------------------------------------------------
 # metric 1: morning delays
 # ----------------------------------------------------------------------------------
+def _window_bounds(date, lo, hi, tz):
+    start = dt.datetime.combine(date, dt.time.fromisoformat(lo), tzinfo=tz)
+    end_date = date + dt.timedelta(days=1) if hi < lo else date
+    end = dt.datetime.combine(end_date, dt.time.fromisoformat(hi), tzinfo=tz)
+    return start, end
+
+
+def _window_segments(start, end, max_hours=12):
+    if end <= start + dt.timedelta(hours=max_hours):
+        return [(start, end)]
+    out = []
+    step = dt.timedelta(hours=max_hours) - dt.timedelta(minutes=1)
+    cur = start
+    while cur <= end:
+        seg_end = min(cur + step, end)
+        out.append((cur, seg_end))
+        if seg_end == end:
+            break
+        cur = seg_end + dt.timedelta(minutes=1)
+    return out
+
+
 def morning(client, cfg, date, tz, classify, known=None):
-    """Metric 1: EVERY flight (all airlines, all routes) at the home airport in the window."""
+    """Metric 1: EVERY flight (all airlines, all routes) at the home airport in the configured window."""
     lo, hi = cfg["morning_window"]
     home = cfg["home_airport"]
-    if cfg.get("morning_include_arrivals", True):
-        flights = client.airport_window(home, f"{date}T{lo}", f"{date}T{hi}")
-    else:
-        flights = client.airport_departures(home, f"{date}T{lo}", f"{date}T{hi}")
+    start, end = _window_bounds(date, lo, hi, tz)
+    flights = []
+    for seg_start, seg_end in _window_segments(start, end):
+        start_local = f"{seg_start.date()}T{seg_start.strftime('%H:%M')}"
+        end_local = f"{seg_end.date()}T{seg_end.strftime('%H:%M')}"
+        if cfg.get("morning_include_arrivals", True):
+            flights.extend(client.airport_window(home, start_local, end_local))
+        else:
+            flights.extend(client.airport_departures(home, start_local, end_local))
     rows, seen = [], set()
     for f in flights:
         if known is not None and f["number"] not in known:
@@ -275,7 +303,7 @@ def morning(client, cfg, date, tz, classify, known=None):
         if not sched:
             continue
         local = sched.astimezone(tz)
-        if not (lo <= local.strftime("%H:%M") <= hi):
+        if not (start <= local <= end):
             continue
         key = (f["number"], f["direction"], local.strftime("%H:%M"))
         if key in seen:
