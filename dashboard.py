@@ -93,7 +93,7 @@ def render(cfg, data_dir, docs_dir, tz, mock=False):
         cls = "mine" if r["mine"] else ""
         opt_rows += (f"<tr class='{cls}'><td>{_e(r['dep'])}</td><td>{_e(r['itinerary'])}"
                      f"{' <b>(yours)</b>' if r['mine'] else ''}<div class='sub'>{_e(r['kind'])} · {_e(r['airline'])}"
-                     f"{' · via ' + _e(r['via']) if r['via'] else ''}</div></td><td>{_e(r['arr'])}</td>"
+                     f"{' · via ' + _e(r['via']) if r['via'] else ''}</div></td>"
                      f"<td>{_chip(r['state'])}<div class='sub'>{_e(r['detail'])}</div></td>"
                      f"<td class='sub'>{_e(_history(opts_all, r['itinerary']))}</td></tr>")
     mine_row = next((r for r in opts if r["mine"]), None)
@@ -142,8 +142,8 @@ details{{margin-top:12px}}summary{{cursor:pointer;color:var(--mut);padding:4px 0
 <th>Delayed ≥{thr} min</th><th>Worst (min)</th><th>Cancelled</th></tr>
 {''.join(summ) or '<tr><td colspan=6 class="sub">No runs yet.</td></tr>'}</table></div>{detail}</div>
 <h2>2. {_e(cfg['home_airport'])} → {_e(cfg['dest_airport'])} options on {_e(travel)}</h2>
-<div class="card"><div class="scroll"><table><tr><th>Dep</th><th>Flight(s)</th><th>Arr</th><th>Status now</th><th>History</th></tr>
-{opt_rows or '<tr><td colspan=5 class="sub">No runs yet.</td></tr>'}</table></div></div>
+<div class="card"><div class="scroll"><table><tr><th>Dep</th><th>Flight(s)</th><th>Status now</th><th>History</th></tr>
+{opt_rows or '<tr><td colspan=4 class="sub">No runs yet.</td></tr>'}</table></div></div>
 <p class="meta">Source: AeroDataBox free plan + SpiceJet schedule file. “NOT IN FEED” means the flight should operate
 but is missing from the live airport board, which often precedes a cancellation but can also be a data gap.
 Always confirm with the airline.</p>
