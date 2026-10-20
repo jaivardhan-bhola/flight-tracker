@@ -109,3 +109,4 @@ run_utc,date,direction,flight,airline,airport,sched,revised,delay_min,status,sta
 2026-10-20T07:07:45.918239Z,2026-10-20,Arrival,6E373,IndiGo,,08:55,08:35,-20,Arrived,ON TIME
 2026-10-20T07:07:45.918239Z,2026-10-20,Arrival,6E1302,IndiGo,,08:55,08:38,-17,Arrived,ON TIME
 2026-10-20T07:07:45.918239Z,2026-10-20,Departure,AKJ446V,AKJ,UDR,08:55,08:55,0,Departed,ON TIME
+2026-10-20T07:12:59.568983Z,2026-10-20,Departure,SG751,SpiceJet,IXB,06:40,07:10,30,Departed,DELAYED
