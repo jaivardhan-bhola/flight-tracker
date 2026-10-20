@@ -168,9 +168,39 @@ class Alerts(unittest.TestCase):
         self.assertTrue(urgent)
         self.assertEqual(tracker.build_alerts(CFG, {"SG141": "CANCELLED", "SG722": "CANCELLED"}, rows)[0], [])
 
+    def test_not_in_feed_only_alerts_for_my_flight(self):
+        rows = [{"itinerary": "SG633+SG613", "dep": "23:20", "state": "NOT IN FEED", "mine": "", "delay_min": ""}]
+        self.assertEqual(tracker.build_alerts(CFG, {"SG633+SG613": "SCHEDULED"}, rows)[0], [])
+        rows[0]["mine"] = "yes"
+        self.assertEqual(len(tracker.build_alerts(CFG, {"SG633+SG613": "SCHEDULED"}, rows)[0]), 1)
+
     def test_my_flight_delay_alert(self):
         rows = [{"itinerary": "SG141", "dep": "06:05", "state": "DELAYED", "mine": "yes", "delay_min": "40"}]
         self.assertEqual(len(tracker.build_alerts(CFG, {"SG141": "SCHEDULED"}, rows)[0]), 1)
+
+
+class RealPayloads(unittest.TestCase):
+    """Samples captured from the live AeroDataBox API on 20 Oct 2026."""
+    @classmethod
+    def setUpClass(cls):
+        import json
+        with open(os.path.join(os.path.dirname(__file__), "fixtures", "real_samples.json")) as f:
+            cls.s = json.load(f)
+
+    def test_real_departure(self):
+        f = tracker.norm_flight(self.s["departure"], home="BLR")
+        self.assertEqual((f["number"], f["origin"], f["dest"], f["direction"]), ("AI2810", "BLR", "DEL", "Departure"))
+        self.assertEqual(tracker.minutes(f["s_dep"], f["r_dep"]), 0)
+
+    def test_real_arrival_has_origin(self):
+        f = tracker.norm_flight(self.s["arrival"], home="BLR", direction="Arrival")
+        self.assertEqual((f["origin"], f["dest"]), ("LHR", "BLR"))
+        self.assertEqual(tracker.minutes(f["s_arr"], f["r_arr"]), -3)
+
+    def test_real_flight_by_number(self):
+        f = tracker.norm_flight(self.s["number_item"])
+        self.assertEqual((f["number"], f["origin"], f["dest"]), ("SG613", "BOM", "DEL"))
+        self.assertEqual(tracker.hhmm(f["s_dep"], IST), "21:50")
 
 
 class Secrets(unittest.TestCase):

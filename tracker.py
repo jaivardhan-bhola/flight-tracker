@@ -144,7 +144,7 @@ def norm_flight(item, home=None, direction="Departure"):
     }
     if direction == "Arrival":
         # movement = arrival at the queried airport; movement.airport = where it came from
-        rec.update(origin=mv_iata, dest=home, s_dep=None, r_dep=None,
+        rec.update(origin=dp_iata or mv_iata, dest=home, s_dep=None, r_dep=None,
                    s_arr=tfield(mv.get("scheduledTime")) or tfield(ar.get("scheduledTime")),
                    r_arr=tfield(mv.get("revisedTime")) or tfield(ar.get("revisedTime")))
     return rec
@@ -459,7 +459,7 @@ def build_alerts(cfg, prev, rows):
         old = prev.get(r["itinerary"])
         new = r["state"]
         delay = int(r["delay_min"]) if str(r["delay_min"]).lstrip("-").isdigit() else 0
-        if new in BAD_STATES and old != new:
+        if new in BAD_STATES and old != new and (r["mine"] or new != "NOT IN FEED"):
             lines.append(f"{r['itinerary']} ({r['dep']}): {new}" + (" <- YOUR FLIGHT" if r["mine"] else ""))
         elif r["mine"] and new == "DELAYED" and old != "DELAYED" and delay >= thr:
             lines.append(f"{r['itinerary']}: delayed {delay} min <- YOUR FLIGHT")

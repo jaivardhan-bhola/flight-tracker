@@ -1,0 +1,204 @@
+{
+ "departure": {
+  "departure": {
+   "scheduledTime": {
+    "utc": "2026-10-20 00:30Z",
+    "local": "2026-10-20 06:00+05:30"
+   },
+   "revisedTime": {
+    "utc": "2026-10-20 00:30Z",
+    "local": "2026-10-20 06:00+05:30"
+   },
+   "terminal": "2",
+   "checkInDesk": "10-24",
+   "gate": "D10",
+   "quality": [
+    "Basic",
+    "Live"
+   ]
+  },
+  "arrival": {
+   "airport": {
+    "icao": "VIDP",
+    "iata": "DEL",
+    "name": "New Delhi",
+    "location": {
+     "lat": 28.5665,
+     "lon": 77.1031
+    },
+    "countryCode": "in",
+    "timeZone": "Asia/Kolkata"
+   },
+   "scheduledTime": {
+    "utc": "2026-10-20 02:44Z",
+    "local": "2026-10-20 08:14+05:30"
+   },
+   "revisedTime": {
+    "utc": "2026-10-20 02:44Z",
+    "local": "2026-10-20 08:14+05:30"
+   },
+   "terminal": "3",
+   "baggageBelt": "01",
+   "quality": [
+    "Basic",
+    "Live"
+   ]
+  },
+  "number": "AI 2810",
+  "status": "Departed",
+  "codeshareStatus": "IsOperator",
+  "isCargo": false,
+  "aircraft": {
+   "reg": "VT-TQC",
+   "modeS": "80141E",
+   "model": "Airbus A320 NEO"
+  },
+  "airline": {
+   "name": "Air India",
+   "iata": "AI",
+   "icao": "AIC"
+  }
+ },
+ "arrival": {
+  "departure": {
+   "airport": {
+    "icao": "EGLL",
+    "iata": "LHR",
+    "name": "London",
+    "location": {
+     "lat": 51.4706,
+     "lon": -0.461941
+    },
+    "countryCode": "gb",
+    "timeZone": "Europe/London"
+   },
+   "scheduledTime": {
+    "utc": "2026-10-19 14:40Z",
+    "local": "2026-10-19 15:40+01:00"
+   },
+   "revisedTime": {
+    "utc": "2026-10-19 15:08Z",
+    "local": "2026-10-19 16:08+01:00"
+   },
+   "runwayTime": {
+    "utc": "2026-10-19 15:09Z",
+    "local": "2026-10-19 16:09+01:00"
+   },
+   "terminal": "3",
+   "checkInDesk": "A",
+   "runway": "09R",
+   "quality": [
+    "Basic",
+    "Live"
+   ]
+  },
+  "arrival": {
+   "scheduledTime": {
+    "utc": "2026-10-20 00:40Z",
+    "local": "2026-10-20 06:10+05:30"
+   },
+   "revisedTime": {
+    "utc": "2026-10-20 00:37Z",
+    "local": "2026-10-20 06:07+05:30"
+   },
+   "runwayTime": {
+    "utc": "2026-10-20 00:27Z",
+    "local": "2026-10-20 05:57+05:30"
+   },
+   "terminal": "2",
+   "gate": "D1",
+   "baggageBelt": "3B3A",
+   "quality": [
+    "Basic",
+    "Live"
+   ]
+  },
+  "number": "VS 316",
+  "callSign": "VIR316",
+  "status": "Arrived",
+  "codeshareStatus": "IsOperator",
+  "isCargo": false,
+  "aircraft": {
+   "reg": "G-VNEW",
+   "modeS": "406B49",
+   "model": "Boeing 787-9"
+  },
+  "airline": {
+   "name": "Virgin Atlantic",
+   "iata": "VS",
+   "icao": "VIR"
+  }
+ },
+ "number_item": {
+  "greatCircleDistance": {
+   "meter": 1134664.52,
+   "km": 1134.66,
+   "mile": 705.05,
+   "nm": 612.67,
+   "feet": 3722652.63
+  },
+  "departure": {
+   "airport": {
+    "icao": "VABB",
+    "iata": "BOM",
+    "name": "Mumbai Chhatrapati Shivaji",
+    "shortName": "Chhatrapati Shivaji",
+    "municipalityName": "Mumbai",
+    "location": {
+     "lat": 19.0887,
+     "lon": 72.8679
+    },
+    "countryCode": "IN",
+    "timeZone": "Asia/Kolkata"
+   },
+   "scheduledTime": {
+    "utc": "2026-10-28 16:20Z",
+    "local": "2026-10-28 21:50+05:30"
+   },
+   "terminal": "1",
+   "quality": [
+    "Basic"
+   ]
+  },
+  "arrival": {
+   "airport": {
+    "icao": "VIDP",
+    "iata": "DEL",
+    "name": "New Delhi Indira Gandhi",
+    "shortName": "Indira Gandhi",
+    "municipalityName": "New Delhi",
+    "location": {
+     "lat": 28.5665,
+     "lon": 77.1031
+    },
+    "countryCode": "IN",
+    "timeZone": "Asia/Kolkata"
+   },
+   "scheduledTime": {
+    "utc": "2026-10-28 18:25Z",
+    "local": "2026-10-28 23:55+05:30"
+   },
+   "predictedTime": {
+    "utc": "2026-10-28 18:49Z",
+    "local": "2026-10-29 00:19+05:30"
+   },
+   "terminal": "1",
+   "quality": [
+    "Basic"
+   ]
+  },
+  "lastUpdatedUtc": "2026-08-03 19:45Z",
+  "number": "SG 613",
+  "status": "Expected",
+  "codeshareStatus": "Unknown",
+  "isCargo": false,
+  "aircraft": {
+   "model": "Boeing 737-800"
+  },
+  "airline": {
+   "name": "SpiceJet",
+   "iata": "SG",
+   "icao": "SEJ"
+  }
+ }
+}
