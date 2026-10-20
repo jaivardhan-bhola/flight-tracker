@@ -134,7 +134,7 @@ details{{margin-top:12px}}summary{{cursor:pointer;color:var(--mut);padding:4px 0
 <h1>{_e(cfg['home_airport'])} → {_e(cfg['dest_airport'])} tracker</h1>
 <div class="meta">Last option check: {_e(ist(last_run))} IST · API units used last run: {_e(units)}</div>
 {hero}
-<h2>1. Every {_e(cfg['home_airport'])} flight {_e(cfg['morning_window'][0])}–{_e(cfg['morning_window'][1])}: delay log</h2>
+<h2>1. {_e(cfg['home_airport'])} flights {_e(cfg['morning_window'][0])}–{_e(cfg['morning_window'][1])} (listed flight numbers only): delay log</h2>
 <div class="card"><div class="scroll"><table><tr><th>Date</th><th>Flights</th><th>Avg delay (min)</th>
 <th>Delayed ≥{thr} min</th><th>Worst (min)</th><th>Cancelled</th></tr>
 {''.join(summ) or '<tr><td colspan=6 class="sub">No runs yet.</td></tr>'}</table></div>{detail}</div>

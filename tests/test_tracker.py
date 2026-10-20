@@ -102,6 +102,25 @@ class Morning(unittest.TestCase):
         self.assertEqual(rows[1]["direction"], "Arrival")
 
 
+class Listed(unittest.TestCase):
+    def test_only_listed_flights(self):
+        known = {"SG141", "SG722"}
+        c = Fake(dep=[fids("SG 141", "DEL", "2026-10-28 06:05"), fids("6E 531", "HYD", "2026-10-28 06:45")],
+                 arr=[fids("6E 7214", "DEL", "2026-10-28 06:20", with_leg=False)])
+        rows = tracker.morning(c, CFG, D, IST, CL, known)
+        self.assertEqual([r["flight"] for r in rows], ["SG141"])
+        sched = tracker.load_schedule()
+        c2 = Fake(dep=[fids("6E 6131", "DEL", "2026-10-28 06:30", airline="IndiGo")])
+        res = {r["itinerary"] for r in tracker.options(c2, CFG, sched, D, IST, CL, False, known)}
+        self.assertNotIn("6E6131", res)
+        self.assertIn("SG141", res)
+
+    def test_numbers_file_has_my_flight_and_leg2(self):
+        known = tracker.load_known_flights({})
+        self.assertIn("SG141", known)
+        self.assertIn("SG613", known)
+
+
 class Options(unittest.TestCase):
     def setUp(self):
         self.sched = tracker.load_schedule()

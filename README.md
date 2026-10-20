@@ -3,8 +3,8 @@
 Runs twice a day on GitHub Actions (free), logs to CSV, and publishes a dashboard on GitHub Pages.
 
 **Tracks**
-1. **Every flight at BLR between 06:00 and 09:00** (departures *and* arrivals, all airlines, all routes): delay in minutes, status, daily summary (avg delay, % delayed, cancelled).
-2. **Every BLR → DEL option on 28 Oct**: all direct flights from the live airport board (any airline), plus SpiceJet connecting itineraries from your schedule file, with each leg's live status. Your flight (SG141) is highlighted.
+1. **Listed flights at BLR between 06:00 and 09:00** (departures *and* arrivals): only flight numbers that appear in your schedule file (`flight_numbers.txt`, 183 numbers). Delay in minutes, status, daily summary. Set `"only_listed_flights": false` in `config.json` to track all airlines.
+2. **Every BLR → DEL option on 28 Oct**: listed direct flights from the live airport board, plus SpiceJet connecting itineraries from your schedule file, with each leg's live status. Your flight (SG141) is highlighted.
 
 Alerts (optional, free): a push notification via ntfy.sh when any option becomes cancelled, goes missing from the feed, or when SG141 is delayed 15+ min.
 
@@ -20,7 +20,7 @@ Alerts (optional, free): a push notification via ntfy.sh when any option becomes
 Everything lives in `config.json` (travel date, your flight, window, delay threshold).
 To preview the dashboard without a key: `python tracker.py --mock` (synthetic data, clearly labelled, written to `_mock/`).
 To simulate a cancellation: `python tracker.py --mock --mock-cancel SG141`.
-New SpiceJet schedule file: `python extract_schedule.py new.xlsx`.
+New SpiceJet schedule file: `python extract_schedule.py new.xlsx` (refreshes both the BLR→DEL schedule and the list of tracked flight numbers).
 
 ## API budget (free plan ≈ 400 units/month, sources differ: 400–600)
 Airport board and flight-by-number calls are 2 units each. Full run ≈ 14 units (1 morning call + 2 day-board calls + 4 leg-2 lookups, each 2 units), lean evening run = 4 units. About 18 units/day, so ~160 units for the 9 days to 28 Oct. A hard cap (`max_units_per_run`) stops runaway use, and units used are shown on the dashboard.
@@ -29,5 +29,5 @@ Airport board and flight-by-number calls are 2 units each. Full run ≈ 14 units
 - **Not tested against the live API.** It was built against AeroDataBox's published response format and tested on synthetic data (16 unit tests). On the first run, check `data/raw/*.json` against the dashboard; if a field is shaped differently, `norm_flight()` in `tracker.py` is the one place to adjust.
 - **Indian airport coverage can be patchy.** The API marks some data as "approximate"; delay figures depend on the airline/airport feeding live updates. A flight showing **NOT IN FEED** may be cancelled, or just a data gap.
 - **Cancellations show up late.** Airlines usually update status a day or less before departure, so expect the real signal around 26–28 Oct. For SG141 (a route that starts 25 Oct) the feed may be empty until then; that is why it shows NOT IN FEED rather than "fine".
-- Connecting itineraries cover **SpiceJet only** (that's what the file contains). Other airlines' direct flights are included via the live board.
+- Connecting itineraries cover **SpiceJet only** (that's what the file contains). Flights from other airlines are ignored unless `only_listed_flights` is false.
 - GitHub scheduled runs can start 10–30 minutes late. The data is for your information; always confirm with the airline (SMS/app) before acting.

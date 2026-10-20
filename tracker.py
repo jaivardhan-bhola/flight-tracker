@@ -2,10 +2,12 @@
 """Free BLR -> DEL flight tracker (standard library only).
 
 Two things are logged on every run:
-  1. MORNING DELAYS  - EVERY flight (departures and arrivals, all airlines, all routes) at the
-                       home airport between 06:00 and 09:00 today: delay in minutes + status.
+  1. MORNING DELAYS  - every flight listed in the schedule file (flight_numbers.txt) that
+                       departs from / arrives at the home airport between 06:00 and 09:00
+                       today: delay in minutes + status. (Set "only_listed_flights": false in
+                       config.json to track all airlines instead.)
   2. DEL OPTIONS     - every BLR -> DEL option on the travel date:
-                       direct flights (all airlines, from the live airport board) and
+                       direct flights (listed flights, from the live airport board) and
                        SpiceJet connecting itineraries (from schedule_blr_del.csv, with
                        each leg's live status looked up).
 
@@ -88,6 +90,15 @@ def load_schedule(path=None):
     path = path or os.path.join(ROOT, "schedule_blr_del.csv")
     with open(path, newline="") as f:
         return list(csv.DictReader(f))
+
+
+def load_known_flights(cfg, path=None):
+    """Flight numbers listed in the schedule file. None = track everything."""
+    if not cfg.get("only_listed_flights", True):
+        return None
+    path = path or os.path.join(ROOT, "flight_numbers.txt")
+    with open(path) as f:
+        return {nflight(line) for line in f if line.strip()}
 
 
 # ----------------------------------------------------------------------------------
@@ -247,7 +258,7 @@ def make_classifier(threshold):
 # ----------------------------------------------------------------------------------
 # metric 1: morning delays
 # ----------------------------------------------------------------------------------
-def morning(client, cfg, date, tz, classify):
+def morning(client, cfg, date, tz, classify, known=None):
     """Metric 1: EVERY flight (all airlines, all routes) at the home airport in the window."""
     lo, hi = cfg["morning_window"]
     home = cfg["home_airport"]
@@ -257,6 +268,8 @@ def morning(client, cfg, date, tz, classify):
         flights = client.airport_departures(home, f"{date}T{lo}", f"{date}T{hi}")
     rows, seen = [], set()
     for f in flights:
+        if known is not None and f["number"] not in known:
+            continue
         arrival = f["direction"] == "Arrival"
         sched, rev = (f["s_arr"], f["r_arr"]) if arrival else (f["s_dep"], f["r_dep"])
         if not sched:
@@ -306,7 +319,7 @@ def leg_text(label, f, tz, classify, date=None):
     return f"{label} {hhmm(f['s_dep'], tz)}{nxt} {classify(f['status'], d)}{extra}"
 
 
-def options(client, cfg, schedule, date, tz, classify, with_legs=True):
+def options(client, cfg, schedule, date, tz, classify, with_legs=True, known=None):
     home, dest, mine = cfg["home_airport"], cfg["dest_airport"], nflight(cfg.get("my_flight"))
     day = fetch_day(client, home, date)
     by_num = {}
@@ -323,7 +336,7 @@ def options(client, cfg, schedule, date, tz, classify, with_legs=True):
 
     # -- direct flights seen on the live airport board (all airlines) ----------------
     for f in day:
-        if f["dest"] == dest and f["number"] not in seen:
+        if f["dest"] == dest and f["number"] not in seen and (known is None or f["number"] in known):
             seen.add(f["number"])
             d = minutes(f["s_dep"], f["r_dep"])
             st = classify(f["status"], d)
@@ -492,6 +505,7 @@ def main(argv=None):
     travel = dt.date.fromisoformat(cfg["travel_date"])
     classify = make_classifier(cfg["delay_threshold_min"])
     schedule = load_schedule()
+    known = load_known_flights(cfg)
 
     base = os.path.join(args.base, "_mock") if args.mock else args.base
     data_dir, docs_dir = os.path.join(base, "data"), os.path.join(base, "docs")
@@ -511,7 +525,7 @@ def main(argv=None):
 
     if not args.skip_morning:
         try:
-            m_rows = morning(client, cfg, today, tz, classify)
+            m_rows = morning(client, cfg, today, tz, classify, known)
             append_csv(os.path.join(data_dir, "morning_delays.csv"), MORNING_COLS,
                        [dict(r, run_utc=run_utc) for r in m_rows])
         except (ApiError, BudgetExceeded) as e:
@@ -519,7 +533,7 @@ def main(argv=None):
 
     if today <= travel:
         try:
-            o_rows = options(client, cfg, schedule, travel, tz, classify, with_legs=not args.skip_legs)
+            o_rows = options(client, cfg, schedule, travel, tz, classify, with_legs=not args.skip_legs, known=known)
             path = os.path.join(data_dir, "options.csv")
             prev = previous_states(path, travel.isoformat())
             append_csv(path, OPTION_COLS,

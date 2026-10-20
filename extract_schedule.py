@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Extract BLR -> DEL rows (direct, via-stop, connecting) from a SpiceJet schedule .xlsx
-into schedule_blr_del.csv. Re-run whenever a new schedule file is published:
+into schedule_blr_del.csv, and every flight number in the file into flight_numbers.txt
+(the tracker only tracks flights listed there). Re-run whenever a new schedule file is published:
 
     pip install openpyxl
     python extract_schedule.py path/to/Schedules_Domestic.xlsx
@@ -28,13 +29,15 @@ def pdate(s: str) -> str:
     return dt.datetime.strptime(s.strip(), "%d %b %y").date().isoformat()
 
 
-def main(path: str, out: str = "schedule_blr_del.csv") -> None:
+def main(path: str, out: str = "schedule_blr_del.csv", numbers_out: str = "flight_numbers.txt") -> None:
     wb = openpyxl.load_workbook(path, read_only=True)
     rows = []
+    all_numbers = set()
     for sheet in wb.sheetnames:
         for r in wb[sheet].iter_rows(min_row=6, values_only=True):
             if not r[0] or not r[1]:
                 continue
+            all_numbers.update(norm_flight(x) for x in str(r[3]).split("/") if x.strip())
             if r[0].strip().upper() != "BENGALURU" or r[1].strip().upper() != "DELHI":
                 continue
             flights = [norm_flight(x) for x in r[3].split("/")]
@@ -60,7 +63,9 @@ def main(path: str, out: str = "schedule_blr_del.csv") -> None:
         w = csv.DictWriter(f, fieldnames=list(rows[0]))
         w.writeheader()
         w.writerows(rows)
-    print(f"wrote {len(rows)} rows to {out}")
+    with open(numbers_out, "w") as f:
+        f.write("\n".join(sorted(all_numbers)) + "\n")
+    print(f"wrote {len(rows)} rows to {out} and {len(all_numbers)} flight numbers to {numbers_out}")
 
 
 if __name__ == "__main__":
