@@ -290,10 +290,7 @@ def morning(client, cfg, date, tz, classify, known=None):
     for seg_start, seg_end in _window_segments(start, end):
         start_local = f"{seg_start.date()}T{seg_start.strftime('%H:%M')}"
         end_local = f"{seg_end.date()}T{seg_end.strftime('%H:%M')}"
-        if cfg.get("morning_include_arrivals", True):
-            flights.extend(client.airport_window(home, start_local, end_local))
-        else:
-            flights.extend(client.airport_departures(home, start_local, end_local))
+        flights.extend(client.airport_departures(home, start_local, end_local))
     rows, seen = [], set()
     for f in flights:
         if known is not None and f["number"] not in known:

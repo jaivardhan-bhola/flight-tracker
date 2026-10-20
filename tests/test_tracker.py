@@ -91,15 +91,15 @@ class Schedule(unittest.TestCase):
 
 
 class Morning(unittest.TestCase):
-    def test_all_flights_both_directions(self):
+    def test_only_departures_in_window(self):
         c = Fake(dep=[fids("SG 141", "DEL", "2026-10-28 06:05", "2026-10-28 06:35"),
                       fids("6E 531", "HYD", "2026-10-28 06:45"),
                       fids("AI 999", "BOM", "2026-10-28 09:40")],          # outside window -> dropped
                 arr=[fids("6E 7214", "DEL", "2026-10-28 06:20", "2026-10-28 06:50", with_leg=False)])
         rows = tracker.morning(c, CFG, D, IST, CL)
-        self.assertEqual([r["flight"] for r in rows], ["SG141", "6E7214", "6E531"])
+        self.assertEqual([r["flight"] for r in rows], ["SG141", "6E531"])
         self.assertEqual(rows[0]["delay_min"], 30)
-        self.assertEqual(rows[1]["direction"], "Arrival")
+        self.assertTrue(all(r["direction"] == "Departure" for r in rows))
 
     def test_full_day_window_is_split_into_two_api_calls(self):
         cfg = dict(CFG, morning_window=["00:00", "23:59"])
@@ -109,7 +109,7 @@ class Morning(unittest.TestCase):
                 super().__init__(dep=[fids("SG 141", "DEL", "2026-10-28 06:05")])
                 self.calls = []
 
-            def airport_window(self, iata, start, end):
+            def airport_departures(self, iata, start, end):
                 self.calls.append((start, end))
                 return list(self.dep)
 
@@ -119,8 +119,8 @@ class Morning(unittest.TestCase):
         self.assertEqual(c.calls, [("2026-10-28T00:00", "2026-10-28T11:59"),
                                    ("2026-10-28T12:00", "2026-10-28T23:59")])
 
-    def test_departures_only_when_arrivals_disabled(self):
-        cfg = dict(CFG, morning_include_arrivals=False)
+    def test_arrivals_ignored_even_if_enabled(self):
+        cfg = dict(CFG, morning_include_arrivals=True)
 
         class Counting(Fake):
             def __init__(self):

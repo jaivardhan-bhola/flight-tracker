@@ -3,7 +3,7 @@
 Runs twice a day on GitHub Actions (free), logs to CSV, and publishes a dashboard on GitHub Pages.
 
 **Tracks**
-1. **Listed flights at BLR across the full day (00:00–23:59 by default)** (departures *and* arrivals): only flight numbers that appear in your schedule file (`flight_numbers.txt`, 183 numbers). Delay in minutes, status, daily summary. Set `"only_listed_flights": false` in `config.json` to track all airlines.
+1. **Listed departures at BLR across the full day (00:00–23:59 by default)**: only flight numbers that appear in your schedule file (`flight_numbers.txt`, 183 numbers). Delay in minutes, status, daily summary. Set `"only_listed_flights": false` in `config.json` to track all airlines.
 2. **Every BLR → DEL option on 28 Oct**: listed direct flights from the live airport board, plus SpiceJet connecting itineraries from your schedule file, with each leg's live status. Your flight (SG141) is highlighted.
 
 Alerts (optional, free): a push notification via ntfy.sh when any option becomes cancelled, goes missing from the feed, or when SG141 is delayed 15+ min.
