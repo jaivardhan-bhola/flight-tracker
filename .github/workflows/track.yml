@@ -28,6 +28,8 @@ jobs:
           RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
         run: |
+          mkdir -p data docs
+          if [ -z "$RAPIDAPI_KEY" ]; then echo "::error::Secret RAPIDAPI_KEY is empty or missing. Add it under Settings > Secrets and variables > Actions (exact name RAPIDAPI_KEY)."; exit 1; fi
           if [ "${{ github.event.schedule }}" = "0 15 * * *" ]; then
             python tracker.py --skip-morning --skip-legs
           else
@@ -38,5 +40,6 @@ jobs:
         run: |
           git config user.name "flight-tracker-bot"
           git config user.email "actions@users.noreply.github.com"
+          mkdir -p data docs
           git add data docs
           git diff --cached --quiet || (git commit -m "tracker run $(date -u +%FT%TZ)" && git pull --rebase && git push)
