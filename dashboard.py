@@ -58,7 +58,10 @@ def render(cfg, data_dir, docs_dir, tz, mock=False):
     opts = [r for r in opts if r["run_utc"] == last_run]
 
     # ---- metric 1: per-day summary + latest day's detail ----
-    latest = _latest_per(morning, ("date", "direction", "flight", "sched"))
+    newest = {}
+    for r in morning:  # use only each day's most recent run (an older run may include flights since filtered out)
+        newest[r["date"]] = max(newest.get(r["date"], ""), r["run_utc"])
+    latest = [r for r in morning if r["run_utc"] == newest[r["date"]]]
     days = sorted({r["date"] for r in latest}, reverse=True)
     summ = []
     for d in days:
