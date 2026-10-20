@@ -119,6 +119,33 @@ class Morning(unittest.TestCase):
         self.assertEqual(c.calls, [("2026-10-28T00:00", "2026-10-28T11:59"),
                                    ("2026-10-28T12:00", "2026-10-28T23:59")])
 
+    def test_departures_only_when_arrivals_disabled(self):
+        cfg = dict(CFG, morning_include_arrivals=False)
+
+        class Counting(Fake):
+            def __init__(self):
+                super().__init__(
+                    dep=[fids("SG 141", "DEL", "2026-10-28 06:05", "2026-10-28 06:35")],
+                    arr=[fids("6E 7214", "DEL", "2026-10-28 06:20", "2026-10-28 06:50", with_leg=False)],
+                )
+                self.window_calls = 0
+                self.departure_calls = 0
+
+            def airport_window(self, iata, start, end):
+                self.window_calls += 1
+                return super().airport_window(iata, start, end)
+
+            def airport_departures(self, iata, start, end):
+                self.departure_calls += 1
+                return super().airport_departures(iata, start, end)
+
+        c = Counting()
+        rows = tracker.morning(c, cfg, D, IST, CL)
+
+        self.assertEqual(c.window_calls, 0)
+        self.assertEqual(c.departure_calls, 1)
+        self.assertTrue(all(r["direction"] != "Arrival" for r in rows))
+
 
 class Listed(unittest.TestCase):
     def test_only_listed_flights(self):

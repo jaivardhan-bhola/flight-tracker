@@ -10,6 +10,6 @@
   "delay_threshold_min": 15,
   "timezone": "Asia/Kolkata",
   "max_units_per_run": 40,
-  "morning_include_arrivals": true,
+  "morning_include_arrivals": false,
   "only_listed_flights": true
 }
