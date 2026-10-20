@@ -101,6 +101,24 @@ class Morning(unittest.TestCase):
         self.assertEqual(rows[0]["delay_min"], 30)
         self.assertEqual(rows[1]["direction"], "Arrival")
 
+    def test_full_day_window_is_split_into_two_api_calls(self):
+        cfg = dict(CFG, morning_window=["00:00", "23:59"])
+
+        class Counting(Fake):
+            def __init__(self):
+                super().__init__(dep=[fids("SG 141", "DEL", "2026-10-28 06:05")])
+                self.calls = []
+
+            def airport_window(self, iata, start, end):
+                self.calls.append((start, end))
+                return list(self.dep)
+
+        c = Counting()
+        rows = tracker.morning(c, cfg, D, IST, CL)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(c.calls, [("2026-10-28T00:00", "2026-10-28T11:59"),
+                                   ("2026-10-28T12:00", "2026-10-28T23:59")])
+
 
 class Listed(unittest.TestCase):
     def test_only_listed_flights(self):
