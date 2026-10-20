@@ -1,0 +1,42 @@
+name: track-flights
+
+on:
+  schedule:
+    - cron: "0 5 * * *"    # 10:30 IST - full run (morning delays for today + all BLR->DEL options incl. connecting legs)
+    - cron: "0 15 * * *"   # 20:30 IST - lean run (direct-flight status only, saves API units)
+  workflow_dispatch:        # "Run workflow" button; also use this for the first test
+
+permissions:
+  contents: write
+
+concurrency:
+  group: track
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Unit tests
+        run: python -m unittest discover -s tests
+      - name: Track
+        env:
+          RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: |
+          if [ "${{ github.event.schedule }}" = "0 15 * * *" ]; then
+            python tracker.py --skip-morning --skip-legs
+          else
+            python tracker.py
+          fi
+      - name: Commit results
+        if: always()
+        run: |
+          git config user.name "flight-tracker-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data docs
+          git diff --cached --quiet || (git commit -m "tracker run $(date -u +%FT%TZ)" && git pull --rebase && git push)

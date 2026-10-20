@@ -1,0 +1,14 @@
+{
+  "home_airport": "BLR",
+  "dest_airport": "DEL",
+  "travel_date": "2026-10-28",
+  "my_flight": "SG141",
+  "morning_window": [
+    "06:00",
+    "09:00"
+  ],
+  "delay_threshold_min": 15,
+  "timezone": "Asia/Kolkata",
+  "max_units_per_run": 40,
+  "morning_include_arrivals": true
+}
