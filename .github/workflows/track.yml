@@ -3,7 +3,7 @@ name: track-flights
 on:
   schedule:
     - cron: "0 5 * * *"    # 10:30 IST - full run (morning delays for today + all BLR->DEL options incl. connecting legs)
-    - cron: "0 15 * * *"   # 20:30 IST - lean run (direct-flight status only, saves API units)
+    - cron: "30 15 * * *"  # 21:00 IST - lean run (direct-flight status only, saves API units)
   workflow_dispatch:        # "Run workflow" button; also use this for the first test
 
 permissions:
@@ -30,7 +30,7 @@ jobs:
         run: |
           mkdir -p data docs
           if [ -z "$RAPIDAPI_KEY" ]; then echo "::error::Secret RAPIDAPI_KEY is empty or missing. Add it under Settings > Secrets and variables > Actions (exact name RAPIDAPI_KEY)."; exit 1; fi
-          if [ "${{ github.event.schedule }}" = "0 15 * * *" ]; then
+          if [ "${{ github.event.schedule }}" = "30 15 * * *" ]; then
             python tracker.py --skip-morning --skip-legs
           else
             python tracker.py
