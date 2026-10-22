@@ -1,9 +1,6 @@
 name: track-flights
 
 on:
-  schedule:
-    - cron: "0 5 * * *"    # 10:30 IST - full run (morning delays for today + all BLR->DEL options incl. connecting legs)
-    - cron: "30 15 * * *"  # 21:00 IST - lean run (direct-flight status only, saves API units)
   workflow_dispatch:        # "Run workflow" button; also use this for the first test
 
 permissions:
