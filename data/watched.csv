@@ -1,0 +1,2 @@
+run_utc,date,flight,route,sched_dep,revised_dep,sched_arr,revised_arr,delay_min,status,state,detail
+2026-11-06T15:58:39.387525Z,2026-11-12,SG614,DEL→BLR,06:30,,09:25,,,Expected,SCHEDULED,API status: Expected

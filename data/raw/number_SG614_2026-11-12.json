@@ -1,0 +1,74 @@
+[
+ {
+  "greatCircleDistance": {
+   "meter": 1702765.96,
+   "km": 1702.77,
+   "mile": 1058.05,
+   "nm": 919.42,
+   "feet": 5586502.48
+  },
+  "departure": {
+   "airport": {
+    "icao": "VIDP",
+    "iata": "DEL",
+    "name": "New Delhi Indira Gandhi",
+    "shortName": "Indira Gandhi",
+    "municipalityName": "New Delhi",
+    "location": {
+     "lat": 28.5665,
+     "lon": 77.1031
+    },
+    "countryCode": "IN",
+    "timeZone": "Asia/Kolkata"
+   },
+   "scheduledTime": {
+    "utc": "2026-11-12 01:00Z",
+    "local": "2026-11-12 06:30+05:30"
+   },
+   "terminal": "1",
+   "quality": [
+    "Basic"
+   ]
+  },
+  "arrival": {
+   "airport": {
+    "icao": "VOBL",
+    "iata": "BLR",
+    "name": "Bangalore Bengaluru",
+    "shortName": "Bengaluru",
+    "municipalityName": "Bangalore",
+    "location": {
+     "lat": 13.197899,
+     "lon": 77.7063
+    },
+    "countryCode": "IN",
+    "timeZone": "Asia/Kolkata"
+   },
+   "scheduledTime": {
+    "utc": "2026-11-12 03:55Z",
+    "local": "2026-11-12 09:25+05:30"
+   },
+   "predictedTime": {
+    "utc": "2026-11-12 03:57Z",
+    "local": "2026-11-12 09:27+05:30"
+   },
+   "terminal": "1",
+   "quality": [
+    "Basic"
+   ]
+  },
+  "lastUpdatedUtc": "2026-08-03 19:37Z",
+  "number": "SG 614",
+  "status": "Expected",
+  "codeshareStatus": "Unknown",
+  "isCargo": false,
+  "aircraft": {
+   "model": "Boeing 737-800"
+  },
+  "airline": {
+   "name": "SpiceJet",
+   "iata": "SG",
+   "icao": "SEJ"
+  }
+ }
+]
