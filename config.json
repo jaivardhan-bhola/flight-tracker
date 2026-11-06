@@ -11,5 +11,11 @@
   "timezone": "Asia/Kolkata",
   "max_units_per_run": 40,
   "morning_include_arrivals": false,
-  "only_listed_flights": true
+  "only_listed_flights": true,
+  "watch_flights": [
+    {
+      "number": "SG614",
+      "date": "2026-11-12"
+    }
+  ]
 }

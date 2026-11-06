@@ -443,12 +443,67 @@ def options(client, cfg, schedule, date, tz, classify, with_legs=True, known=Non
 
 
 # ----------------------------------------------------------------------------------
+# watched flights: any flight number on any date (config "watch_flights")
+# ----------------------------------------------------------------------------------
+def watch(client, cfg, tz, classify, today):
+    rows = []
+    for w in cfg.get("watch_flights", []):
+        number, date = nflight(w["number"]), w["date"]
+        try:
+            d = dt.date.fromisoformat(date)
+        except ValueError:
+            continue
+        if d < today - dt.timedelta(days=1):  # stop watching a day after the flight
+            continue
+        items = client.flight_by_number(number, date)
+        if not items:
+            rows.append({"date": date, "flight": number, "route": "", "sched_dep": "", "revised_dep": "",
+                         "sched_arr": "", "revised_arr": "", "delay_min": "", "status": "NotInFeed",
+                         "state": "NOT IN FEED",
+                         "detail": "Not in the live feed for this date: the airline may not have loaded it yet, or it was removed."})
+        for f in items:
+            dd, da = minutes(f["s_dep"], f["r_dep"]), minutes(f["s_arr"], f["r_arr"])
+            delay = dd if dd is not None else da
+            rows.append({"date": date, "flight": number,
+                         "route": f"{f['origin'] or '?'}→{f['dest'] or '?'}",
+                         "sched_dep": hhmm(f["s_dep"], tz), "revised_dep": hhmm(f["r_dep"], tz),
+                         "sched_arr": hhmm(f["s_arr"], tz), "revised_arr": hhmm(f["r_arr"], tz),
+                         "delay_min": "" if delay is None else delay, "status": f["status"],
+                         "state": classify(f["status"], delay), "detail": f"API status: {f['status']}"})
+    return rows
+
+
+def previous_watch_states(path):
+    last = {}
+    for r in sorted(read_csv(path), key=lambda r: r["run_utc"]):
+        last[(r["flight"], r["date"])] = r["state"]
+    return last
+
+
+def watch_alerts(cfg, prev, rows):
+    thr, lines = cfg["delay_threshold_min"], []
+    for r in rows:
+        old = prev.get((r["flight"], r["date"]))
+        new = r["state"]
+        delay = int(r["delay_min"]) if str(r["delay_min"]).lstrip("-").isdigit() else 0
+        if old is None or old == new:
+            continue
+        if new in BAD_STATES:
+            lines.append(f"{r['flight']} on {r['date']}: {new}")
+        elif new == "DELAYED" and delay >= thr:
+            lines.append(f"{r['flight']} on {r['date']}: delayed {delay} min")
+    return lines
+
+
+# ----------------------------------------------------------------------------------
 # storage, alerts
 # ----------------------------------------------------------------------------------
 MORNING_COLS = ["run_utc", "date", "direction", "flight", "airline", "airport", "sched",
                 "revised", "delay_min", "status", "state"]
 OPTION_COLS = ["run_utc", "travel_date", "kind", "itinerary", "airline", "via", "dep", "arr",
                "state", "delay_min", "detail", "mine"]
+WATCH_COLS = ["run_utc", "date", "flight", "route", "sched_dep", "revised_dep", "sched_arr",
+              "revised_arr", "delay_min", "status", "state", "detail"]
 RUN_COLS = ["run_utc", "units_used", "morning_rows", "option_rows", "errors"]
 
 
@@ -517,6 +572,8 @@ def main(argv=None):
     ap.add_argument("--mock", action="store_true", help="synthetic data, no API key, writes to ./_mock")
     ap.add_argument("--mock-cancel", default="", help="with --mock: comma list of flights to show cancelled")
     ap.add_argument("--skip-morning", action="store_true", help="skip metric 1 (saves 2 API units)")
+    ap.add_argument("--only-watch", action="store_true",
+                    help="only check the watch_flights list (2 API units per flight)")
     ap.add_argument("--skip-legs", action="store_true", help="skip connecting-leg lookups (saves ~8 units)")
     ap.add_argument("--date", help="pretend today is YYYY-MM-DD")
     ap.add_argument("--base", default=ROOT, help=argparse.SUPPRESS)
@@ -546,7 +603,20 @@ def main(argv=None):
                              raw_dir=os.path.join(data_dir, "raw"))
 
     run_utc = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-    errors, m_rows, o_rows = [], [], []
+    errors, m_rows, o_rows, w_rows = [], [], [], []
+
+    if cfg.get("watch_flights"):  # first, so the explicitly requested flights never lose to the unit cap
+        try:
+            w_rows = watch(client, cfg, tz, classify, today)
+            wpath = os.path.join(data_dir, "watched.csv")
+            prev = previous_watch_states(wpath)
+            append_csv(wpath, WATCH_COLS, [dict(r, run_utc=run_utc) for r in w_rows])
+            send_alert((os.environ.get("NTFY_TOPIC") or "").strip(), watch_alerts(cfg, prev, w_rows), False, "watch")
+        except (ApiError, BudgetExceeded) as e:
+            errors.append(f"watch: {e}")
+
+    if args.only_watch:
+        args.skip_morning = True
 
     if not args.skip_morning:
         try:
@@ -556,7 +626,7 @@ def main(argv=None):
         except (ApiError, BudgetExceeded) as e:
             errors.append(f"morning: {e}")
 
-    if today <= travel:
+    if today <= travel and not args.only_watch:
         try:
             o_rows = options(client, cfg, schedule, travel, tz, classify, with_legs=not args.skip_legs, known=known)
             path = os.path.join(data_dir, "options.csv")
@@ -575,7 +645,7 @@ def main(argv=None):
 
     from dashboard import render
     render(cfg, data_dir, docs_dir, tz, mock=args.mock)
-    print(f"done: {len(m_rows)} morning flights, {len(o_rows)} options, {units} API units used")
+    print(f"done: {len(m_rows)} morning flights, {len(o_rows)} options, {len(w_rows)} watched, {units} API units used")
     for e in errors:
         print("ERROR " + e, file=sys.stderr)
     return 1 if errors else 0

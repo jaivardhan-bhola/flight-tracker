@@ -87,6 +87,29 @@ def render(cfg, data_dir, docs_dir, tz, mock=False):
                   f"<div class='scroll'><table><tr><th>Sched</th><th></th><th>Flight</th><th>Airline</th>"
                   f"<th>{_e(cfg['home_airport'])} ↔</th><th>Delay</th><th>State</th></tr>{body}</table></div></details>")
 
+    # ---- watched flights (any flight + date from config "watch_flights") ----
+    watched_all = _read(os.path.join(data_dir, "watched.csv"))
+    newest_w, hist_w = {}, {}
+    for r in sorted(watched_all, key=lambda r: r["run_utc"]):
+        k = (r["flight"], r["date"])
+        newest_w[k] = r
+        if not hist_w.get(k) or hist_w[k][-1] != r["state"]:
+            hist_w.setdefault(k, []).append(r["state"])
+    watch_rows = ""
+    for k, r in sorted(newest_w.items(), key=lambda kv: (kv[0][1], kv[0][0])):
+        times = (f"{_e(r['sched_dep'])} → {_e(r['sched_arr'])}" if r["sched_dep"] else "—")
+        if r["revised_dep"] and r["revised_dep"] != r["sched_dep"]:
+            times += f"<div class='sub'>now departs {_e(r['revised_dep'])}</div>"
+        watch_rows += (f"<tr><td>{_e(r['date'])}</td><td><b>{_e(r['flight'])}</b>"
+                       f"<div class='sub'>{_e(r['route'])}</div></td><td>{times}</td>"
+                       f"<td>{_chip(r['state'])}<div class='sub'>{_delay(r['delay_min'])} · {_e(r['detail'])}</div></td>"
+                       f"<td class='sub'>{_e(' → '.join(hist_w[k][-5:]))}</td></tr>")
+    watch_section = ""
+    if watch_rows:
+        watch_section = ("<h2>Watched flights</h2><div class='card'><div class='scroll'><table><tr><th>Date</th>"
+                         "<th>Flight</th><th>Sched dep → arr</th><th>Status now</th><th>History</th></tr>"
+                         f"{watch_rows}</table></div></div>")
+
     # ---- metric 2: options for the travel date ----
     opt_rows = ""
     for r in sorted(opts, key=lambda r: (r["dep"] or "99", r["itinerary"])):
@@ -137,6 +160,7 @@ details{{margin-top:12px}}summary{{cursor:pointer;color:var(--mut);padding:4px 0
 <h1>{_e(cfg['home_airport'])} → {_e(cfg['dest_airport'])} tracker</h1>
 <div class="meta">Last option check: {_e(ist(last_run))} IST · API units used last run: {_e(units)}</div>
 {hero}
+{watch_section}
 <h2>1. {_e(cfg['home_airport'])} departures {_e(cfg['morning_window'][0])}–{_e(cfg['morning_window'][1])} (listed flight numbers only): delay log</h2>
 <div class="card"><div class="scroll"><table><tr><th>Date</th><th>Flights</th><th>Avg delay (min)</th>
 <th>Delayed ≥{thr} min</th><th>Worst (min)</th><th>Cancelled</th></tr>

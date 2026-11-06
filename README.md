@@ -16,6 +16,9 @@ Alerts (optional, free): a push notification via ntfy.sh when any option becomes
 4. **Pages.** Settings → Pages → Deploy from branch → `main` / `/docs`.
 5. **First run.** Actions tab → *track-flights* → **Run workflow**. Then open `data/raw/` in the repo and the dashboard URL. If the dashboard shows real flights, you're done.
 
+## Watch any flight
+Add entries to `watch_flights` in `config.json`, e.g. `{"number": "SG614", "date": "2026-11-12"}`. Each run looks the flight up directly (2 API units each) and shows it in a "Watched flights" table with its status history. Use *Run workflow → only_watch* to check just these flights without spending units on the rest.
+
 ## Change things
 Everything lives in `config.json` (travel date, your flight, window, delay threshold).
 To preview the dashboard without a key: `python tracker.py --mock` (synthetic data, clearly labelled, written to `_mock/`).

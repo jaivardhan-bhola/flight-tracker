@@ -1,7 +1,12 @@
 name: track-flights
 
 on:
-  workflow_dispatch:        # "Run workflow" button; also use this for the first test
+  workflow_dispatch:        # "Run workflow" button
+    inputs:
+      only_watch:
+        description: "Only check the watched flights (uses 2 API units per flight)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -27,7 +32,9 @@ jobs:
         run: |
           mkdir -p data docs
           if [ -z "$RAPIDAPI_KEY" ]; then echo "::error::Secret RAPIDAPI_KEY is empty or missing. Add it under Settings > Secrets and variables > Actions (exact name RAPIDAPI_KEY)."; exit 1; fi
-          if [ "${{ github.event.schedule }}" = "30 15 * * *" ]; then
+          if [ "${{ inputs.only_watch }}" = "true" ]; then
+            python tracker.py --only-watch
+          elif [ "${{ github.event.schedule }}" = "30 15 * * *" ]; then
             python tracker.py --skip-morning --skip-legs
           else
             python tracker.py

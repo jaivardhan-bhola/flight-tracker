@@ -248,6 +248,36 @@ class RealPayloads(unittest.TestCase):
         self.assertEqual(tracker.hhmm(f["s_dep"], IST), "21:50")
 
 
+class Watch(unittest.TestCase):
+    CFGW = dict(CFG, watch_flights=[{"number": "SG 614", "date": "2026-11-12"}])
+    TODAY = dt.date(2026, 11, 6)
+
+    def item(self, rev=None, status="Expected"):
+        d = {"number": "SG 614", "status": status, "airline": {"name": "SpiceJet"},
+             "departure": {"airport": {"iata": "DEL"}, "scheduledTime": {"utc": "2026-11-12 01:00Z", "local": "2026-11-12 06:30+05:30"}},
+             "arrival": {"airport": {"iata": "BLR"}, "scheduledTime": {"utc": "2026-11-12 03:55Z", "local": "2026-11-12 09:25+05:30"}}}
+        if rev:
+            d["departure"]["revisedTime"] = {"utc": rev, "local": rev}
+        return d
+
+    def test_found_with_delay(self):
+        c = Fake(legs={("SG614", "2026-11-12"): [self.item(rev="2026-11-12 01:40Z")]})
+        r = tracker.watch(c, self.CFGW, IST, CL, self.TODAY)[0]
+        self.assertEqual((r["flight"], r["route"], r["sched_dep"], r["sched_arr"]), ("SG614", "DEL→BLR", "06:30", "09:25"))
+        self.assertEqual((r["delay_min"], r["state"]), (40, "DELAYED"))
+
+    def test_not_in_feed_and_past_skipped(self):
+        r = tracker.watch(Fake(), self.CFGW, IST, CL, self.TODAY)
+        self.assertEqual(r[0]["state"], "NOT IN FEED")
+        self.assertEqual(tracker.watch(Fake(), self.CFGW, IST, CL, dt.date(2026, 11, 14)), [])
+
+    def test_alert_only_on_change(self):
+        rows = [{"flight": "SG614", "date": "2026-11-12", "state": "CANCELLED", "delay_min": ""}]
+        self.assertEqual(len(tracker.watch_alerts(CFG, {("SG614", "2026-11-12"): "SCHEDULED"}, rows)), 1)
+        self.assertEqual(tracker.watch_alerts(CFG, {("SG614", "2026-11-12"): "CANCELLED"}, rows), [])
+        self.assertEqual(tracker.watch_alerts(CFG, {}, rows), [])
+
+
 class Secrets(unittest.TestCase):
     def test_key_whitespace_stripped(self):
         self.assertEqual(tracker.AeroDataBox("abc123\n").key, "abc123")
